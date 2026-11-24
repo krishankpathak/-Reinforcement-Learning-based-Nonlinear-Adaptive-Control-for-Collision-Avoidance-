@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <world name="variable_friction_corridor">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.002</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- Global Sun & Lighting -->
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Normal Concrete Floor (mu = 0.75) -->
+    <model name="concrete_ground">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane><normal>0 0 1</normal><size>30 30</size></plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.75</mu><mu2>0.75</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane><normal>0 0 1</normal><size>30 30</size></plane>
+          </geometry>
+          <material><ambient>0.6 0.6 0.6 1</ambient><diffuse>0.6 0.6 0.6 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Low Friction Wet Tile Corridor (mu = 0.22) -->
+    <model name="wet_tile_zone">
+      <static>true</static>
+      <pose>0 0 0.001 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box><size>8.0 5.0 0.002</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.22</mu><mu2>0.22</mu2></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box><size>8.0 5.0 0.002</size></box>
+          </geometry>
+          <material><ambient>0.2 0.5 0.9 0.8</ambient><diffuse>0.2 0.5 0.9 0.8</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Static Obstacle Pillars -->
+    <model name="pillar_left">
+      <static>true</static>
+      <pose>-6.0 0 1.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.6</radius><length>2.0</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.6</radius><length>2.0</length></cylinder></geometry></visual>
+      </link>
+    </model>
+
+    <model name="pillar_right">
+      <static>true</static>
+      <pose>6.0 0 1.0 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.6</radius><length>2.0</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.6</radius><length>2.0</length></cylinder></geometry></visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

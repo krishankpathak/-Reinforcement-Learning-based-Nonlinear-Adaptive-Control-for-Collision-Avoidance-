@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<robot name="transformable_quadruped" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Physical Constants -->
+  <xacro:property name="total_mass" value="2.45" />
+  <xacro:property name="chassis_mass" value="1.25" />
+  <xacro:property name="femur_mass" value="0.18" />
+  <xacro:property name="tibia_mass" value="0.12" />
+  <xacro:property name="femur_length" value="0.16" />
+  <xacro:property name="tibia_length" value="0.14" />
+
+  <!-- Base Footprint & Center of Mass -->
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.22" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Fuselage Chassis Link -->
+  <link name="base_link">
+    <inertial>
+      <mass value="${chassis_mass}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.0052" ixy="0.0" ixz="0.0" iyy="0.0078" iyz="0.0" izz="0.0115"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.18 0.14 0.065"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.18 0.14 0.065"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Macro for 4 Transformable Rotor-Leg Limbs -->
+  <xacro:macro name="rotor_leg" params="prefix quadrant angle_z">
+    <!-- Hip Roll / Yaw Knuckle Joint -->
+    <joint name="${prefix}_hip_joint" type="revolute">
+      <parent link="base_link"/>
+      <child link="${prefix}_femur_link"/>
+      <origin xyz="${0.09 * cos(angle_z)} ${0.09 * sin(angle_z)} 0" rpy="0 0 ${angle_z}"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.1" upper="1.57" effort="12.0" velocity="4.5"/>
+      <dynamics damping="0.15" friction="0.05"/>
+    </joint>
+
+    <!-- Femur Boom Link (Houses BLDC motor and propeller) -->
+    <link name="${prefix}_femur_link">
+      <inertial>
+        <mass value="${femur_mass}"/>
+        <origin xyz="${femur_length/2} 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.00012" ixy="0" ixz="0" iyy="0.00045" iyz="0" izz="0.00045"/>
+      </inertial>
+      <visual>
+        <origin xyz="${femur_length/2} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${femur_length} 0.022 0.022"/>
+        </geometry>
+        <material name="carbon_fiber">
+          <color rgba="0.1 0.1 0.1 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="${femur_length/2} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${femur_length} 0.022 0.022"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Knee Pitch Joint -->
+    <joint name="${prefix}_knee_joint" type="revolute">
+      <parent link="${prefix}_femur_link"/>
+      <child link="${prefix}_tibia_link"/>
+      <origin xyz="${femur_length} 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="2.09" effort="8.0" velocity="6.0"/>
+      <dynamics damping="0.1" friction="0.02"/>
+    </joint>
+
+    <!-- Tibia Strut Link -->
+    <link name="${prefix}_tibia_link">
+      <inertial>
+        <mass value="${tibia_mass}"/>
+        <origin xyz="${tibia_length/2} 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.00008" ixy="0" ixz="0" iyy="0.00028" iyz="0" izz="0.00028"/>
+      </inertial>
+      <visual>
+        <origin xyz="${tibia_length/2} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${tibia_length} 0.018 0.018"/>
+        </geometry>
+        <material name="blue">
+          <color rgba="0.1 0.3 0.8 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="${tibia_length/2} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${tibia_length} 0.018 0.018"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Footpad Link with Dynamic Ground Friction Parameters -->
+    <joint name="${prefix}_foot_joint" type="fixed">
+      <parent link="${prefix}_tibia_link"/>
+      <child link="${prefix}_foot_link"/>
+      <origin xyz="${tibia_length} 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix}_foot_link">
+      <collision>
+        <geometry>
+          <sphere radius="0.02"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Gazebo Contact and Surface Friction Properties -->
+    <gazebo reference="${prefix}_foot_link">
+      <mu1>0.85</mu1>
+      <mu2>0.85</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <minDepth>0.001</minDepth>
+      <material>Gazebo/Red</material>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Instantiate 4 Limbs: FL, FR, RL, RR -->
+  <xacro:rotor_leg prefix="fl" quadrant="1" angle_z="0.785398"/>
+  <xacro:rotor_leg prefix="fr" quadrant="2" angle_z="2.356194"/>
+  <xacro:rotor_leg prefix="rl" quadrant="3" angle_z="3.926991"/>
+  <xacro:rotor_leg prefix="rr" quadrant="4" angle_z="5.497787"/>
+
+  <!-- IMU Sensor Plugin -->
+  <gazebo reference="base_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>/imu/data</topic>
+    </sensor>
+  </gazebo>
+
+  <!-- Gazebo ROS 2 Joint Controller Plugin -->
+  <gazebo>
+    <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+      <sub_topic>/cmd_joint_positions</sub_topic>
+    </plugin>
+  </gazebo>
+
+</robot>
